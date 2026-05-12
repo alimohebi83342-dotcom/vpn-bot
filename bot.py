@@ -1,1 +1,212 @@
-<html><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/></head><body>import asyncio<br>import logging<br>import os<br><br>from aiogram import Bot, Dispatcher, F<br>from <a href="http://aiogram.enums">aiogram.enums</a> import ParseMode<br>from <a href="http://aiogram.filters">aiogram.filters</a> import CommandStart<br>from <a href="http://aiogram.types">aiogram.types</a> import (<br>&nbsp;&nbsp;&nbsp; Message,<br>&nbsp;&nbsp;&nbsp; ReplyKeyboardMarkup,<br>&nbsp;&nbsp;&nbsp; KeyboardButton,<br>&nbsp;&nbsp;&nbsp; InlineKeyboardMarkup,<br>&nbsp;&nbsp;&nbsp; InlineKeyboardButton,<br>&nbsp;&nbsp;&nbsp; CallbackQuery<br>)<br><br>TOKEN = <a href="http://os.getenv">os.getenv</a>("BOT_TOKEN")<br><br># آیدی عددی خودت<br>ADMIN_ID = <a href="tel:123456789">123456789</a><br><br># شماره کارت<br>CARD_NUMBER = "<a href="tel:6037-9912-3456-7890">6037-9912-3456-7890</a>"<br><br># اسم صاحب کارت<br>CARD_OWNER = "Ali VPN"<br><br><a href="http://logging.basicConfig">logging.basicConfig</a>(level=<a href="http://logging.INFO">logging.INFO</a>)<br><br>bot = Bot(<br>&nbsp;&nbsp;&nbsp; token=TOKEN,<br>&nbsp;&nbsp;&nbsp; parse_mode=<a href="http://ParseMode.HTML">ParseMode.HTML</a><br>)<br><br>dp = Dispatcher()<br><br># ذخیره اطلاعات کاربران<br>pending_users = {}<br><br># منوی اصلی<br>main_menu = ReplyKeyboardMarkup(<br>&nbsp;&nbsp;&nbsp; keyboard=[<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; [<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; KeyboardButton(<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; text="🔥 خرید سرویس حرفه ای"<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; )<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; ],<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; [<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; KeyboardButton(<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; text="💎 خرید سرویس اقتصادی"<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; )<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; ]<br>&nbsp;&nbsp;&nbsp; ],<br>&nbsp;&nbsp;&nbsp; resize_keyboard=True<br>)<br><br># پلن های حرفه ای<br>pro_plans = InlineKeyboardMarkup(<br>&nbsp;&nbsp;&nbsp; inline_keyboard=[<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; [<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; InlineKeyboardButton(<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; text="1GB - <a href="tel:360.000">360.000</a>",<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; callback_data="plan_pro_1GB_<a href="tel:360000">360000</a>"<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; )<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; ],<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; [<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; InlineKeyboardButton(<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; text="5GB - <a href="tel:1.690.000">1.690.000</a>",<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; callback_data="plan_pro_5GB_<a href="tel:1690000">1690000</a>"<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; )<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; ],<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; [<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; InlineKeyboardButton(<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; text="10GB - <a href="tel:3.400.000">3.400.000</a>",<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; callback_data="plan_pro_10GB_<a href="tel:3400000">3400000</a>"<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; )<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; ],<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; [<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; InlineKeyboardButton(<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; text="20GB - <a href="tel:5.200.000">5.200.000</a>",<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; callback_data="plan_pro_20GB_<a href="tel:5200000">5200000</a>"<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; )<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; ],<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; [<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; InlineKeyboardButton(<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; text="50GB - <a href="tel:11.200.000">11.200.000</a>",<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; callback_data="plan_pro_50GB_<a href="tel:11200000">11200000</a>"<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; )<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; ]<br>&nbsp;&nbsp;&nbsp; ]<br>)<br><br># پلن های اقتصادی<br>eco_plans = InlineKeyboardMarkup(<br>&nbsp;&nbsp;&nbsp; inline_keyboard=[<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; [<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; InlineKeyboardButton(<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; text="10GB - <a href="tel:2.500.000">2.500.000</a>",<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; callback_data="plan_eco_10GB_<a href="tel:2500000">2500000</a>"<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; )<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; ],<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; [<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; InlineKeyboardButton(<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; text="20GB - <a href="tel:3.900.000">3.900.000</a>",<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; callback_data="plan_eco_20GB_<a href="tel:3900000">3900000</a>"<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; )<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; ],<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; [<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; InlineKeyboardButton(<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; text="40GB - <a href="tel:7.000.000">7.000.000</a>",<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; callback_data="plan_eco_40GB_<a href="tel:7000000">7000000</a>"<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; )<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; ]<br>&nbsp;&nbsp;&nbsp; ]<br>)<br><br>@<a href="http://dp.message">dp.message</a>(CommandStart())<br>async def start(message: Message):<br><br>&nbsp;&nbsp;&nbsp; text = f"""<br>👋 سلام {message.from_user.first_name}<br><br>به فروشگاه VPN خوش اومدی 🚀<br><br>لطفا نوع سرویس مورد نظر رو انتخاب کن:<br>"""<br><br>&nbsp;&nbsp;&nbsp; await <a href="http://message.answer">message.answer</a>(<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; text,<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; reply_markup=main_menu<br>&nbsp;&nbsp;&nbsp; )<br><br># سرویس حرفه ای<br>@<a href="http://dp.message">dp.message</a>(<a href="http://F.text">F.text</a> == "🔥 خرید سرویس حرفه ای")<br>async def pro_service(message: Message):<br><br>&nbsp;&nbsp;&nbsp; await <a href="http://message.answer">message.answer</a>(<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; "🔥 لیست سرویس های حرفه ای:",<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; reply_markup=pro_plans<br>&nbsp;&nbsp;&nbsp; )<br><br># سرویس اقتصادی<br>@<a href="http://dp.message">dp.message</a>(<a href="http://F.text">F.text</a> == "💎 خرید سرویس اقتصادی")<br>async def eco_service(message: Message):<br><br>&nbsp;&nbsp;&nbsp; await <a href="http://message.answer">message.answer</a>(<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; "💎 لیست سرویس های اقتصادی:",<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; reply_markup=eco_plans<br>&nbsp;&nbsp;&nbsp; )<br><br># انتخاب پلن<br>@dp.callback_query(<a href="http://F.data.startswith">F.data.startswith</a>("plan_"))<br>async def select_plan(callback: CallbackQuery):<br><br>&nbsp;&nbsp;&nbsp; data = <a href="http://callback.data.split">callback.data.split</a>("_")<br><br>&nbsp;&nbsp;&nbsp; category = data[1]<br>&nbsp;&nbsp;&nbsp; volume = data[2]<br>&nbsp;&nbsp;&nbsp; price = data[3]<br><br>&nbsp;&nbsp;&nbsp; pending_users[<a href="http://callback.from_user.id">callback.from_user.id</a>] = {<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; "category": category,<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; "volume": volume,<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; "price": price<br>&nbsp;&nbsp;&nbsp; }<br><br>&nbsp;&nbsp;&nbsp; text = f"""<br>✅ پلن انتخابی:<br><br>📦 حجم:<br>&lt;code&gt;{volume}&lt;/code&gt;<br><br>💰 مبلغ:<br>&lt;code&gt;{price}&lt;/code&gt;<br><br>━━━━━━━━━━━━━━<br><br>💳 شماره کارت:<br><br>&lt;code&gt;{CARD_NUMBER}&lt;/code&gt;<br><br>👤 صاحب کارت:<br>{CARD_OWNER}<br><br>━━━━━━━━━━━━━━<br><br>پس از پرداخت،<br>لطفا عکس رسید را ارسال کن 📸<br>"""<br><br>&nbsp;&nbsp;&nbsp; await <a href="http://callback.message.answer">callback.message.answer</a>(text)<br><br># دریافت رسید<br>@<a href="http://dp.message">dp.message</a>(<a href="http://F.photo">F.photo</a>)<br>async def receive_receipt(message: Message):<br><br>&nbsp;&nbsp;&nbsp; user_id = <a href="http://message.from_user.id">message.from_user.id</a><br><br>&nbsp;&nbsp;&nbsp; if user_id not in pending_users:<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; return<br><br>&nbsp;&nbsp;&nbsp; info = pending_users[user_id]<br><br>&nbsp;&nbsp;&nbsp; buttons = InlineKeyboardMarkup(<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; inline_keyboard=[<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; [<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; InlineKeyboardButton(<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; text="✅ تایید پرداخت",<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; callback_data=f"approve_{user_id}"<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; )<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; ]<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; ]<br>&nbsp;&nbsp;&nbsp; )<br><br>&nbsp;&nbsp;&nbsp; caption = f"""<br>📥 رسید جدید<br><br>👤 نام:<br>{message.from_user.full_name}<br><br>🆔 آیدی:<br>&lt;code&gt;{user_id}&lt;/code&gt;<br><br>📦 پلن:<br>{info['volume']}<br><br>💰 مبلغ:<br>{info['price']}<br>"""<br><br>&nbsp;&nbsp;&nbsp; await bot.send_photo(<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; ADMIN_ID,<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; photo=<a href="http://message.photo">message.photo</a>[-1].file_id,<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; caption=caption,<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; reply_markup=buttons<br>&nbsp;&nbsp;&nbsp; )<br><br>&nbsp;&nbsp;&nbsp; await <a href="http://message.answer">message.answer</a>(<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; "✅ رسیدت ارسال شد.\nبعد از تایید، کانفیگ برات ارسال میشه."<br>&nbsp;&nbsp;&nbsp; )<br><br># تایید پرداخت<br>@dp.callback_query(<a href="http://F.data.startswith">F.data.startswith</a>("approve_"))<br>async def approve(callback: CallbackQuery):<br><br>&nbsp;&nbsp;&nbsp; user_id = int(<a href="http://callback.data.split">callback.data.split</a>("_")[1])<br><br>&nbsp;&nbsp;&nbsp; await bot.send_message(<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; user_id,<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; """<br>✅ پرداخت شما تایید شد<br><br>🔗 کانفیگ شما:<br><br>&lt;code&gt;<br>vless://example-config<br>&lt;/code&gt;<br><br>🙏 ممنون از خریدت ❤️<br>"""<br>&nbsp;&nbsp;&nbsp; )<br><br>&nbsp;&nbsp;&nbsp; await <a href="http://callback.message.answer">callback.message.answer</a>(<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; "✅ کانفیگ برای کاربر ارسال شد."<br>&nbsp;&nbsp;&nbsp; )<br><br>async def main():<br>&nbsp;&nbsp;&nbsp; await dp.start_polling(bot)<br><br>if __name__ == "__main__":<br>&nbsp;&nbsp;&nbsp; <a href="http://asyncio.run">asyncio.run</a>(main())<br><br><br></body></html>
+```python
+import asyncio
+import logging
+import os
+
+from aiogram import Bot, Dispatcher, F
+from aiogram.enums import ParseMode
+from aiogram.filters import CommandStart
+from aiogram.types import (
+    Message,
+    ReplyKeyboardMarkup,
+    KeyboardButton,
+    InlineKeyboardMarkup,
+    InlineKeyboardButton,
+    CallbackQuery
+)
+
+TOKEN = os.getenv("BOT_TOKEN")
+
+ADMIN_ID = 123456789
+
+CARD_NUMBER = "6037-9912-3456-7890"
+CARD_OWNER = "Ali VPN"
+
+logging.basicConfig(level=logging.INFO)
+
+bot = Bot(
+    token=TOKEN,
+    parse_mode=ParseMode.HTML
+)
+
+dp = Dispatcher()
+
+pending_users = {}
+
+main_menu = ReplyKeyboardMarkup(
+    keyboard=[
+        [KeyboardButton(text="🔥 خرید سرویس حرفه ای")],
+        [KeyboardButton(text="💎 خرید سرویس اقتصادی")]
+    ],
+    resize_keyboard=True
+)
+
+pro_plans = InlineKeyboardMarkup(
+    inline_keyboard=[
+        [InlineKeyboardButton(text="1GB - 360.000", callback_data="plan_pro_1GB_360000")],
+        [InlineKeyboardButton(text="5GB - 1.690.000", callback_data="plan_pro_5GB_1690000")],
+        [InlineKeyboardButton(text="10GB - 3.400.000", callback_data="plan_pro_10GB_3400000")],
+        [InlineKeyboardButton(text="20GB - 5.200.000", callback_data="plan_pro_20GB_5200000")],
+        [InlineKeyboardButton(text="50GB - 11.200.000", callback_data="plan_pro_50GB_11200000")]
+    ]
+)
+
+eco_plans = InlineKeyboardMarkup(
+    inline_keyboard=[
+        [InlineKeyboardButton(text="10GB - 2.500.000", callback_data="plan_eco_10GB_2500000")],
+        [InlineKeyboardButton(text="20GB - 3.900.000", callback_data="plan_eco_20GB_3900000")],
+        [InlineKeyboardButton(text="40GB - 7.000.000", callback_data="plan_eco_40GB_7000000")]
+    ]
+)
+
+@dp.message(CommandStart())
+async def start(message: Message):
+
+    text = f"""
+👋 سلام {message.from_user.first_name}
+
+به فروشگاه VPN خوش اومدی 🚀
+
+لطفا نوع سرویس مورد نظر رو انتخاب کن:
+"""
+
+    await message.answer(
+        text,
+        reply_markup=main_menu
+    )
+
+@dp.message(F.text == "🔥 خرید سرویس حرفه ای")
+async def pro_service(message: Message):
+
+    await message.answer(
+        "🔥 لیست سرویس های حرفه ای:",
+        reply_markup=pro_plans
+    )
+
+@dp.message(F.text == "💎 خرید سرویس اقتصادی")
+async def eco_service(message: Message):
+
+    await message.answer(
+        "💎 لیست سرویس های اقتصادی:",
+        reply_markup=eco_plans
+    )
+
+@dp.callback_query(F.data.startswith("plan_"))
+async def select_plan(callback: CallbackQuery):
+
+    data = callback.data.split("_")
+
+    category = data[1]
+    volume = data[2]
+    price = data[3]
+
+    pending_users[callback.from_user.id] = {
+        "category": category,
+        "volume": volume,
+        "price": price
+    }
+
+    text = f"""
+✅ پلن انتخابی:
+
+📦 حجم:
+<code>{volume}</code>
+
+💰 مبلغ:
+<code>{price}</code>
+
+━━━━━━━━━━━━━━
+
+💳 شماره کارت:
+
+<code>{CARD_NUMBER}</code>
+
+👤 صاحب کارت:
+{CARD_OWNER}
+
+━━━━━━━━━━━━━━
+
+پس از پرداخت،
+لطفا عکس رسید را ارسال کن 📸
+"""
+
+    await callback.message.answer(text)
+
+@dp.message(F.photo)
+async def receive_receipt(message: Message):
+
+    user_id = message.from_user.id
+
+    if user_id not in pending_users:
+        return
+
+    info = pending_users[user_id]
+
+    buttons = InlineKeyboardMarkup(
+        inline_keyboard=[
+            [
+                InlineKeyboardButton(
+                    text="✅ تایید پرداخت",
+                    callback_data=f"approve_{user_id}"
+                )
+            ]
+        ]
+    )
+
+    caption = f"""
+📥 رسید جدید
+
+👤 نام:
+{message.from_user.full_name}
+
+🆔 آیدی:
+<code>{user_id}</code>
+
+📦 پلن:
+{info['volume']}
+
+💰 مبلغ:
+{info['price']}
+"""
+
+    await bot.send_photo(
+        ADMIN_ID,
+        photo=message.photo[-1].file_id,
+        caption=caption,
+        reply_markup=buttons
+    )
+
+    await message.answer(
+        "✅ رسیدت ارسال شد.\nبعد از تایید، کانفیگ برات ارسال میشه."
+    )
+
+@dp.callback_query(F.data.startswith("approve_"))
+async def approve(callback: CallbackQuery):
+
+    user_id = int(callback.data.split("_")[1])
+
+    await bot.send_message(
+        user_id,
+        """
+✅ پرداخت شما تایید شد
+
+🔗 کانفیگ شما:
+
+<code>
+vless://example-config
+</code>
+
+🙏 ممنون از خریدت ❤️
+"""
+    )
+
+    await callback.message.answer(
+        "✅ کانفیگ برای کاربر ارسال شد."
+    )
+
+async def main():
+    await dp.start_polling(bot)
+
+if __name__ == "__main__":
+    asyncio.run(main())
+```
