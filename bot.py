@@ -14,7 +14,7 @@ InlineKeyboardButton,
 CallbackQuery
 )
 
-TOKEN = os.getenv("8742073683:AAGL64E4ulGAiXCmlXefRhh6jWdFxx86sLM")
+TOKEN = os.getenv("BOT_TOKEN")
 
 ADMIN_ID = 5541045710
 
