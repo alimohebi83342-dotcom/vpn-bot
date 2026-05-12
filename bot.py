@@ -13,12 +13,15 @@ logging.basicConfig(level=logging.INFO)
 bot = Bot(token=TOKEN)
 dp = Dispatcher()
 
+
 @dp.message(CommandStart())
 async def start(message: Message):
-await message.answer("ربات روشن شد ✅")
+    await message.answer("ربات روشن شد ✅")
+
 
 async def main():
-await dp.start_polling(bot)
+    await dp.start_polling(bot)
 
-if **name** == "**main**":
-asyncio.run(main())
+
+if __name__ == "__main__":
+    asyncio.run(main())
